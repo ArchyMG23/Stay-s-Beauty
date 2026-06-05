@@ -1,0 +1,6 @@
+{
+  "name": "Stay's Beauty",
+  "description": "Landing page moderne et haut de gamme pour le salon de beauté Stay's Beauty, avec système de CMS No-Code intégré.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

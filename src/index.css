@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Montserrat", sans-serif;
+  
+  --color-gold-50: #fdfbf7;
+  --color-gold-100: #fbf6eb;
+  --color-gold-200: #f6ebd2;
+  --color-gold-300: #eed5a3;
+  --color-gold-400: #e3b96e;
+  --color-gold-500: #d49a3f;
+  --color-gold-600: #bc7f31;
+  --color-gold-700: #9d6126;
+  --color-gold-850: #c5a880; /* Elegant gold accent */
+  --color-gold-900: #69411d;
+  
+  --color-rose-brand-50: #fffafb;
+  --color-rose-brand-100: #fff1f3;
+  --color-rose-brand-250: #ffe2e6;
+  --color-rose-brand-300: #fecdd3;
+  --color-rose-brand-400: #fda4af;
+  --color-rose-brand-500: #f43f5e;
+  --color-rose-brand-600: #db2777;
+  --color-rose-brand-900: #881337;
+}
+
+/* Custom CSS to smooth contenteditable outline and focus states */
+[contenteditable="true"] {
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+[contenteditable="true"]:hover {
+  background-color: rgba(212, 154, 63, 0.08);
+  box-shadow: 0 0 0 2px rgba(212, 154, 63, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+}
+[contenteditable="true"]:focus {
+  background-color: rgba(212, 154, 63, 0.12);
+  box-shadow: 0 0 0 2px rgba(212, 154, 63, 0.8);
+  border-radius: 4px;
+}
+
