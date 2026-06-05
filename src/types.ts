@@ -69,5 +69,7 @@ export interface AppContent {
     tiktokName: string;
     tiktokUrl: string;
     whatsappUrl: string;
+    facebookName: string;
+    facebookUrl: string;
   };
 }

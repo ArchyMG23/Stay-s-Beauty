@@ -191,6 +191,18 @@ export default function App() {
           });
         }
         
+        // Ensure facebook and updated instagram handles are correctly merged and healed
+        if (parsed.contact) {
+          if (!parsed.contact.facebookName || parsed.contact.facebookName.includes("alta_")) {
+            parsed.contact.facebookName = "stacy.altamira";
+            parsed.contact.facebookUrl = "https://www.facebook.com/stacy.altamira";
+          }
+          if (!parsed.contact.instagramName || parsed.contact.instagramName.includes("alta_")) {
+            parsed.contact.instagramName = "stacy.altamira";
+            parsed.contact.instagramUrl = "https://www.instagram.com/stacy.altamira";
+          }
+        }
+        
         setContent(parsed);
       } catch (e) {
         console.error("Erreur de lecture du localStorage :", e);
@@ -1306,6 +1318,34 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Réseaux Sociaux */}
+                <div className="flex gap-4">
+                  <span className="w-10 h-10 shrink-0 bg-gold-100 text-gold-600 rounded-full flex items-center justify-center">
+                    <i className="fa-solid fa-hashtag"></i>
+                  </span>
+                  <div>
+                    <h5 className="font-bold text-xs uppercase tracking-wider text-slate-500">Réseaux Sociaux</h5>
+                    <div className="flex flex-col gap-1.5 mt-1">
+                      <a 
+                        href={content.contact.instagramUrl}
+                        target="_blank"
+                        referrerPolicy="no-referrer"
+                        className="text-xs sm:text-sm text-slate-800 hover:text-gold-600 transition-colors font-semibold flex items-center gap-1.5"
+                      >
+                        <i className="fa-brands fa-instagram text-rose-500"></i> Instagram : @{content.contact.instagramName}
+                      </a>
+                      <a 
+                        href={content.contact.facebookUrl}
+                        target="_blank"
+                        referrerPolicy="no-referrer"
+                        className="text-xs sm:text-sm text-slate-800 hover:text-gold-600 transition-colors font-semibold flex items-center gap-1.5"
+                      >
+                        <i className="fa-brands fa-facebook text-blue-600"></i> Facebook : {content.contact.facebookName}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               {/* CTA button contact footer action */}
@@ -1460,8 +1500,19 @@ export default function App() {
                   target="_blank"
                   referrerPolicy="no-referrer"
                   className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-gold-500 hover:text-white transition-all text-xs"
+                  title="Instagram"
                 >
                   <i className="fa-brands fa-instagram"></i>
+                </a>
+                <a 
+                  id="social-facebook-link"
+                  href={content.contact.facebookUrl} 
+                  target="_blank"
+                  referrerPolicy="no-referrer"
+                  className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-gold-500 hover:text-white transition-all text-xs"
+                  title="Facebook"
+                >
+                  <i className="fa-brands fa-facebook-f"></i>
                 </a>
                 <a 
                   id="social-tiktok-link"
@@ -1469,6 +1520,7 @@ export default function App() {
                   target="_blank"
                   referrerPolicy="no-referrer"
                   className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-gold-500 hover:text-white transition-all text-xs"
+                  title="TikTok"
                 >
                   <i className="fa-brands fa-tiktok"></i>
                 </a>
@@ -1478,6 +1530,7 @@ export default function App() {
                   target="_blank"
                   referrerPolicy="no-referrer"
                   className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-gold-500 hover:text-white transition-all text-xs"
+                  title="WhatsApp"
                 >
                   <i className="fa-brands fa-whatsapp"></i>
                 </a>

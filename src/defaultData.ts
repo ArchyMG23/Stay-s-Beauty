@@ -153,10 +153,12 @@ export const defaultAppContent: AppContent = {
     hoursWeekdays: "Mardi au Vendredi : 09:00 – 19:30",
     hoursSaturday: "Samedi : 08:30 – 20:00",
     hoursSunday: "Dimanche : 12:00 – 18:00 (Sur déplacement / RDV uniquement)",
-    instagramName: "@alta_beauty_salon",
-    instagramUrl: "https://instagram.com",
-    tiktokName: "@alta_beauty_pro",
+    instagramName: "stacy.altamira",
+    instagramUrl: "https://www.instagram.com/stacy.altamira",
+    tiktokName: "@stays_beauty_pro",
     tiktokUrl: "https://tiktok.com",
-    whatsappUrl: "https://wa.me/237696423556"
+    whatsappUrl: "https://wa.me/237696423556",
+    facebookName: "stacy.altamira",
+    facebookUrl: "https://www.facebook.com/stacy.altamira"
   }
 };
