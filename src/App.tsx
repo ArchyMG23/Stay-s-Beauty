@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { defaultAppContent } from './defaultData';
-import { AppContent, GalleryItem, PricingItem } from './types';
+import { AppContent, GalleryItem, PricingItem, TestimonialItem, ServiceItem } from './types';
 
 const isMediaVideo = (url?: string): boolean => {
   if (!url) return false;
@@ -148,8 +148,15 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   
   // UI filter and navigation states
-  const [activeGalleryFilter, setActiveGalleryFilter] = useState<'all' | 'nails' | 'hair' | 'lace'>('all');
+  const [activeGalleryFilter, setActiveGalleryFilter] = useState<string>('all');
   const [activeLightboxItem, setActiveLightboxItem] = useState<GalleryItem | null>(null);
+  
+  // Submit new review form states
+  const [newReviewName, setNewReviewName] = useState<string>('');
+  const [newReviewRole, setNewReviewRole] = useState<string>('Cliente');
+  const [newReviewComment, setNewReviewComment] = useState<string>('');
+  const [newReviewRating, setNewReviewRating] = useState<number>(5);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState<boolean>(false);
   
   // CMS status notification / modal
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -201,6 +208,15 @@ export default function App() {
             parsed.contact.instagramName = "stacy.altamira";
             parsed.contact.instagramUrl = "https://www.instagram.com/stacy.altamira";
           }
+        }
+        
+        // Auto-heal missing gallery categories list
+        if (!parsed.galleryCategories || parsed.galleryCategories.length === 0) {
+          parsed.galleryCategories = [
+            { id: "nails", name: "Onglerie" },
+            { id: "hair", name: "Tresses & Coiffures" },
+            { id: "lace", name: "Lace Frontals" }
+          ];
         }
         
         setContent(parsed);
@@ -277,6 +293,34 @@ export default function App() {
     });
   };
 
+  const handleAddService = () => {
+    const newItem: ServiceItem = {
+      id: `service-custom-${Date.now()}`,
+      category: "Signature",
+      title: "Nouveau rituel d'exception",
+      description: "Notre nouvelle formule de mise en beauté exclusive, développée avec amour et soin.",
+      imageUrl: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=600"
+    };
+    setContent(prev => {
+      return {
+        ...prev,
+        services: [...prev.services, newItem]
+      };
+    });
+    showToast("✨ Nouvelle Prestation Signature ajoutée ! Cliquez sur les textes pour la personnaliser ou changez de visuel.");
+  };
+
+  const handleDeleteService = (index: number) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer définitivement cette Prestation Signature ?")) {
+      setContent(prev => {
+        const services = [...prev.services];
+        services.splice(index, 1);
+        return { ...prev, services };
+      });
+      showToast("🗑️ Prestation Signature supprimée.");
+    }
+  };
+
   const handlePricingItemChange = (catIndex: number, itemIndex: number, field: keyof PricingItem, val: string) => {
     setContent(prev => {
       const pricing = [...prev.pricing];
@@ -339,6 +383,222 @@ export default function App() {
       return { ...prev, pricing };
     });
     showToast("🗑️ Prestation supprimée du menu.");
+  };
+
+  // Pricing Category Dynamic Controls
+  const handleAddPricingCategory = () => {
+    const defaultName = prompt("Entrez le titre du nouveau catalogue de prix (ex: Soins Esthétiques) :", "Nouveau Catalogue");
+    if (!defaultName) return;
+    
+    setContent(prev => {
+      const pricing = [...prev.pricing];
+      const newCategory = {
+        id: `pr-cat-${Date.now()}`,
+        name: defaultName,
+        items: [
+          {
+            id: `custom-price-${Date.now()}`,
+            name: "Premier Service de la catégorie",
+            description: "Chouchoutez-vous en éditant ce service.",
+            price: "15 000 FCFA"
+          }
+        ]
+      };
+      return {
+        ...prev,
+        pricing: [...pricing, newCategory]
+      };
+    });
+    showToast(`✨ Catalogue "${defaultName}" ajouté avec succès !`);
+  };
+
+  const handleDeletePricingCategory = (catIdx: number, catName: string) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'intégralité du catalogue "${catName}" et toutes ses prestations ?`)) {
+      setContent(prev => {
+        const pricing = [...prev.pricing];
+        pricing.splice(catIdx, 1);
+        return { ...prev, pricing };
+      });
+      showToast("🗑️ Catalogue supprimé avec succès.");
+    }
+  };
+
+  // Gallery Dynamic Category Controls
+  const handleAddGalleryCategory = () => {
+    const defaultName = prompt("Entrez le nom de la nouvelle catégorie de galerie :", "Ma Nouvelle Catégorie");
+    if (!defaultName) return;
+    const catId = defaultName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-') || `cat-${Date.now()}`;
+    
+    setContent(prev => {
+      const cats = prev.galleryCategories ? [...prev.galleryCategories] : [
+        { id: "nails", name: "Onglerie" },
+        { id: "hair", name: "Tresses & Coiffures" },
+        { id: "lace", name: "Lace Frontals" }
+      ];
+      if (cats.some(c => c.id === catId || c.name.toLowerCase() === defaultName.toLowerCase())) {
+        alert("Une catégorie avec ce nom ou cet identifiant existe déjà.");
+        return prev;
+      }
+      return {
+        ...prev,
+        galleryCategories: [...cats, { id: catId, name: defaultName }]
+      };
+    });
+    setActiveGalleryFilter(catId);
+    showToast(`✨ Catégorie "${defaultName}" ajoutée à la galerie !`);
+  };
+
+  const handleRenameGalleryCategory = (id: string, newName: string) => {
+    if (!newName.trim()) return;
+    setContent(prev => {
+      const cats = prev.galleryCategories ? [...prev.galleryCategories] : [
+        { id: "nails", name: "Onglerie" },
+        { id: "hair", name: "Tresses & Coiffures" },
+        { id: "lace", name: "Lace Frontals" }
+      ];
+      const updatedCats = cats.map(c => c.id === id ? { ...c, name: newName } : c);
+      return {
+         ...prev,
+         galleryCategories: updatedCats
+      };
+    });
+    showToast("🏷️ Catégorie renommée !");
+  };
+
+  const handleDeleteGalleryCategory = (id: string) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ? Toutes ses images perdront cette classification mais resteront visibles dans 'Tous'.")) {
+      setContent(prev => {
+        const cats = prev.galleryCategories ? [...prev.galleryCategories] : [
+          { id: "nails", name: "Onglerie" },
+          { id: "hair", name: "Tresses & Coiffures" },
+          { id: "lace", name: "Lace Frontals" }
+        ];
+        return {
+          ...prev,
+          galleryCategories: cats.filter(c => c.id !== id),
+          gallery: prev.gallery.map(g => g.category === id ? { ...g, category: 'all' } : g)
+        };
+      });
+      if (activeGalleryFilter === id) {
+        setActiveGalleryFilter('all');
+      }
+      showToast("🗑️ Catégorie supprimée de la galerie.");
+    }
+  };
+
+  // Dynamic Gallery Item Management (Photos / Videos)
+  const handleAddNewGalleryItem = () => {
+    const cats = content.galleryCategories || [
+      { id: "nails", name: "Onglerie" },
+      { id: "hair", name: "Tresses & Coiffures" },
+      { id: "lace", name: "Lace Frontals" }
+    ];
+    
+    const defaultCatId = activeGalleryFilter === 'all' ? (cats[0]?.id || 'nails') : activeGalleryFilter;
+    
+    const newItem: GalleryItem = {
+      id: `gal-custom-${Date.now()}`,
+      category: defaultCatId,
+      title: "Nouvelle Réalisation",
+      description: "Description de cette magnifique réalisation.",
+      imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600"
+    };
+    
+    setContent(prev => {
+      return {
+        ...prev,
+        gallery: [newItem, ...prev.gallery]
+      };
+    });
+    
+    showToast("📸 Réalisation ajoutée en haut de la galerie ! Modifiez le texte directement ou survolez pour remplacer de l'image.");
+  };
+
+  const handleDeleteGalleryItem = (index: number) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer définitivement cette réalisation de votre galerie ?")) {
+      setContent(prev => {
+        const gallery = [...prev.gallery];
+        gallery.splice(index, 1);
+        return { ...prev, gallery };
+      });
+      showToast("🗑️ Photo supprimée de la galerie.");
+    }
+  };
+
+  const handleGalleryItemCategoryChange = (index: number, categoryId: string) => {
+    setContent(prev => {
+      const gallery = [...prev.gallery];
+      gallery[index] = { ...gallery[index], category: categoryId };
+      return { ...prev, gallery };
+    });
+    showToast("🏷️ Catégorie de la réalisation mise à jour !");
+  };
+
+  // Testimonial Reviews Handlers (CMS + Visitor submission)
+  const handleTestimonialChange = (index: number, field: 'name' | 'role' | 'comment', val: string) => {
+    setContent(prev => {
+      const testimonials = [...prev.testimonials];
+      testimonials[index] = { ...testimonials[index], [field]: val };
+      return { ...prev, testimonials };
+    });
+  };
+
+  const handleDeleteTestimonial = (index: number) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet avis définitivement ?")) {
+      setContent(prev => {
+        const testimonials = [...prev.testimonials];
+        testimonials.splice(index, 1);
+        return { ...prev, testimonials };
+      });
+      showToast("🗑️ Avis client supprimé.");
+    }
+  };
+
+  const handleAddTestimonial = () => {
+    const newTestimonial: TestimonialItem = {
+      id: `test-custom-${Date.now()}`,
+      name: "Nom de la Reine",
+      role: "Mise en beauté",
+      comment: "Rien à redire ! Prestation royale et attentionnée.",
+      rating: 5
+    };
+    setContent(prev => {
+      return {
+        ...prev,
+        testimonials: [...prev.testimonials, newTestimonial]
+      };
+    });
+    showToast("✨ Nouvel avis ajouté ! Vous pouvez modifier ses textes en direct sur le site.");
+  };
+
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReviewName.trim() || !newReviewComment.trim()) {
+      showToast("⚠️ Veuillez renseigner votre nom et votre avis.");
+      return;
+    }
+
+    const newTestimonial: TestimonialItem = {
+      id: `test-visitor-${Date.now()}`,
+      name: newReviewName.trim(),
+      role: newReviewRole.trim() || "Cliente ravie",
+      comment: newReviewComment.trim(),
+      rating: newReviewRating
+    };
+
+    setContent(prev => {
+      return {
+        ...prev,
+        testimonials: [...prev.testimonials, newTestimonial]
+      };
+    });
+
+    setNewReviewName('');
+    setNewReviewRole('Cliente');
+    setNewReviewComment('');
+    setNewReviewRating(5);
+    setIsReviewFormOpen(false);
+    showToast("👑 Votre avis précieux a été enregistré en direct ! Merci pour votre confiance.");
   };
 
   // Image editing handler
@@ -418,6 +678,12 @@ export default function App() {
   };
 
   // Filtered gallery items
+  const galleryCategoriesList = content.galleryCategories || [
+    { id: "nails", name: "Onglerie" },
+    { id: "hair", name: "Tresses & Coiffures" },
+    { id: "lace", name: "Lace Frontals" }
+  ];
+
   const filteredGallery = content.gallery.filter(item => {
     if (activeGalleryFilter === 'all') return true;
     return item.category === activeGalleryFilter;
@@ -434,7 +700,7 @@ export default function App() {
             <i className="fa-solid fa-lock-open mr-1"></i> Mode Édition No-Code Actif
           </span>
           <span className="hidden md:inline font-sans font-normal normal-case">
-            Cliquez directement sur n'importe quel texte ou prix pour le modifier. Au survol d'une image, cliquez sur le bouton <strong class="underline">"Changer"</strong>.
+            Cliquez directement sur n'importe quel texte ou prix pour le modifier. Au survol d'une image, cliquez sur le bouton <strong className="underline">"Changer"</strong>.
           </span>
           <div className="flex gap-2">
             <button 
@@ -705,7 +971,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {content.services.map((service, index) => {
               // Custom icons to support beauty salon visual guidelines
-              const iconClass = index === 0 ? "fa-solid fa-wand-magic-sparkles" : index === 1 ? "fa-solid fa-scissors" : "fa-solid fa-gem";
+              const iconClass = index % 3 === 0 ? "fa-solid fa-wand-magic-sparkles" : index % 3 === 1 ? "fa-solid fa-scissors" : "fa-solid fa-gem";
               return (
                 <div 
                   id={`service-card-${index}`}
@@ -735,13 +1001,20 @@ export default function App() {
                       )}
                       {/* Edit image trigger */}
                       {isEditMode && (
-                        <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             id={`cms-change-service-img-${index}`}
                             onClick={() => triggerImageChange('service', index)}
-                            className="bg-gold-500 hover:bg-gold-600 text-white font-bold py-1.5 px-3 rounded-full text-[10px] shadow-md uppercase transition-all"
+                            className="bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold py-1.5 px-3 rounded-full text-[10px] shadow-md uppercase transition-all cursor-pointer"
                           >
-                            <i className="fa-solid fa-camera mr-1"></i> Changer
+                            <i className="fa-solid fa-camera mr-1"></i> Changer Visuel
+                          </button>
+                          <button 
+                            id={`cms-delete-service-btn-${index}`}
+                            onClick={() => handleDeleteService(index)}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-full text-[10px] shadow-md uppercase transition-all cursor-pointer"
+                          >
+                            <i className="fa-solid fa-trash mr-1"></i> Supprimer
                           </button>
                         </div>
                       )}
@@ -794,6 +1067,19 @@ export default function App() {
             })}
           </div>
 
+          {/* Add service button for CMS mode */}
+          {isEditMode && (
+            <div className="mt-12 text-center">
+              <button
+                id="service-add-item-btn"
+                onClick={handleAddService}
+                className="bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-2xl shadow-md cursor-pointer hover:-translate-y-0.5 transition-transform inline-flex items-center gap-2"
+              >
+                <i className="fa-solid fa-circle-plus text-base"></i> Ajouter une Prestation Signature
+              </button>
+            </div>
+          )}
+
         </div>
       </section>
 
@@ -829,16 +1115,28 @@ export default function App() {
 
                 {/* Pricing category title */}
                 <div className="flex items-center justify-between mb-8">
-                  <h4 
-                    contentEditable={isEditMode}
-                    suppressContentEditableWarning={true}
-                    onBlur={(e) => handlePricingCategoryNameChange(catIdx, e.currentTarget.textContent || '')}
-                    className="font-serif text-lg lg:text-xl font-bold text-slate-950 uppercase tracking-wide outline-none"
-                  >
-                    {category.name}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 
+                      contentEditable={isEditMode}
+                      suppressContentEditableWarning={true}
+                      onBlur={(e) => handlePricingCategoryNameChange(catIdx, e.currentTarget.textContent || '')}
+                      className="font-serif text-lg lg:text-xl font-bold text-slate-950 uppercase tracking-wide outline-none"
+                    >
+                      {category.name}
+                    </h4>
+                    {isEditMode && (
+                      <button
+                        id={`pricing-category-delete-btn-${catIdx}`}
+                        onClick={() => handleDeletePricingCategory(catIdx, category.name)}
+                        className="text-red-500 hover:text-red-700 transition-colors ml-1 p-1 hover:bg-red-50 rounded"
+                        title="Supprimer tout le catalogue"
+                      >
+                        <i className="fa-solid fa-trash-can text-xs"></i>
+                      </button>
+                    )}
+                  </div>
                   <span className="w-7 h-7 rounded-full bg-gold-50 text-gold-600 flex items-center justify-center text-xs">
-                    <i className={catIdx === 0 ? "fa-solid fa-hands" : catIdx === 1 ? "fa-solid fa-scissors" : "fa-solid fa-crown"}></i>
+                    <i className={catIdx % 3 === 0 ? "fa-solid fa-hands" : catIdx % 3 === 1 ? "fa-solid fa-scissors" : "fa-solid fa-crown"}></i>
                   </span>
                 </div>
 
@@ -926,6 +1224,19 @@ export default function App() {
             ))}
           </div>
 
+          {/* Add pricing category button */}
+          {isEditMode && (
+            <div className="mt-12 text-center">
+              <button
+                id="pricing-add-category-btn"
+                onClick={handleAddPricingCategory}
+                className="bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-2xl shadow-md cursor-pointer hover:-translate-y-0.5 transition-transform inline-flex items-center gap-2 mx-auto"
+              >
+                <i className="fa-solid fa-folder-plus text-sm"></i> Ajouter un Catalogue de Prix (Catégorie)
+              </button>
+            </div>
+          )}
+
         </div>
       </section>
 
@@ -953,27 +1264,55 @@ export default function App() {
             >
               Tous
             </button>
-            <button 
-              id="gallery-tab-nails"
-              onClick={() => setActiveGalleryFilter('nails')}
-              className={`px-5 py-2 rounded-full font-semibold text-xs tracking-wider uppercase transition-all duration-300 ${activeGalleryFilter === 'nails' ? 'bg-gold-500 text-white shadow-md' : 'bg-rose-brand-50 hover:bg-gold-100 text-slate-700'}`}
-            >
-              Onglerie
-            </button>
-            <button 
-              id="gallery-tab-hair"
-              onClick={() => setActiveGalleryFilter('hair')}
-              className={`px-5 py-2 rounded-full font-semibold text-xs tracking-wider uppercase transition-all duration-300 ${activeGalleryFilter === 'hair' ? 'bg-gold-500 text-white shadow-md' : 'bg-rose-brand-50 hover:bg-gold-100 text-slate-700'}`}
-            >
-              Tresses & Coiffures
-            </button>
-            <button 
-              id="gallery-tab-lace"
-              onClick={() => setActiveGalleryFilter('lace')}
-              className={`px-5 py-2 rounded-full font-semibold text-xs tracking-wider uppercase transition-all duration-300 ${activeGalleryFilter === 'lace' ? 'bg-gold-500 text-white shadow-md' : 'bg-rose-brand-50 hover:bg-gold-100 text-slate-700'}`}
-            >
-              Lace Frontals
-            </button>
+            
+            {galleryCategoriesList.map((cat) => (
+              <div key={cat.id} className="inline-flex items-center bg-rose-brand-50/40 rounded-full border border-rose-brand-100/30 overflow-hidden text-slate-700 py-0.5 pl-1.5 pr-2 gap-1">
+                <button 
+                  id={`gallery-tab-${cat.id}`}
+                  onClick={() => setActiveGalleryFilter(cat.id)}
+                  className={`px-3.5 py-1.5 rounded-full font-semibold text-xs tracking-wider uppercase transition-all duration-300 ${activeGalleryFilter === cat.id ? 'bg-gold-500 text-white shadow-md' : 'hover:bg-gold-100/50 text-slate-700'}`}
+                >
+                  <span 
+                    contentEditable={isEditMode}
+                    suppressContentEditableWarning={true}
+                    onBlur={(e) => {
+                      const newName = e.currentTarget.textContent || '';
+                      if (newName && newName !== cat.name) {
+                        handleRenameGalleryCategory(cat.id, newName);
+                      }
+                    }}
+                    className="outline-none"
+                  >
+                    {cat.name}
+                  </span>
+                </button>
+                
+                {isEditMode && (
+                  <button
+                    id={`gallery-delete-tab-${cat.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteGalleryCategory(cat.id);
+                    }}
+                    className="text-red-500 hover:text-red-700 p-1.5 text-xs transition-colors rounded-full hover:bg-red-50"
+                    title={`Supprimer la catégorie ${cat.name}`}
+                  >
+                    <i className="fa-solid fa-trash-can"></i>
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {isEditMode && (
+              <button
+                id="gallery-add-category-btn"
+                onClick={handleAddGalleryCategory}
+                className="px-5 py-2 border border-dashed border-gold-400 text-gold-600 hover:bg-gold-50 rounded-full font-bold text-xs flex items-center gap-1.5 transition-colors"
+                title="Ajouter une nouvelle catégorie de Book"
+              >
+                <i className="fa-solid fa-folder-plus text-xs"></i> + Catégorie
+              </button>
+            )}
           </div>
 
           {/* Grid of gallery assets */}
@@ -1018,9 +1357,29 @@ export default function App() {
 
                     {/* Content Overlay */}
                     <div className="relative p-5 z-10 flex flex-col items-start text-left text-white w-full">
-                      <span className="bg-gold-500/90 text-[9px] font-bold px-2 py-0.5 rounded-full text-white tracking-widest uppercase mb-1.5">
-                        {item.category === 'nails' ? 'Onglerie' : item.category === 'hair' ? 'Tresses' : 'Lace Frontal'}
-                      </span>
+                      {isEditMode ? (
+                        <select
+                          id={`gallery-item-category-select-${item.id}`}
+                          value={item.category}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleGalleryItemCategoryChange(originalIndex, e.target.value);
+                          }}
+                          className="bg-slate-950/90 border border-slate-700 text-gold-400 font-sans text-[10px] px-2 py-1 rounded-lg mb-1.5 focus:outline-none cursor-pointer"
+                        >
+                          {galleryCategoriesList.map(cat => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                          <option value="all">Sélect. "Tous"</option>
+                        </select>
+                      ) : (
+                        <span className="bg-gold-500/90 text-[9px] font-bold px-2 py-0.5 rounded-full text-white tracking-widest uppercase mb-1.5 font-sans">
+                          {galleryCategoriesList.find(c => c.id === item.category)?.name || item.category}
+                        </span>
+                      )}
                       
                       <h5 
                         contentEditable={isEditMode}
@@ -1051,7 +1410,10 @@ export default function App() {
                       {/* Zoom Trigger Button */}
                       <button 
                         id={`gallery-zoom-trigger-${item.id}`}
-                        onClick={() => setActiveLightboxItem(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveLightboxItem(item);
+                        }}
                         className="mt-3 bg-white/20 hover:bg-white/30 text-white rounded-full p-2 text-xs transition-colors self-end flex items-center justify-center h-8 w-8 z-20"
                         title="Zoomer sur la photo"
                       >
@@ -1061,16 +1423,27 @@ export default function App() {
 
                     {/* CMS mode Image Changer */}
                     {isEditMode && (
-                      <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center p-4 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center gap-3 p-4 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                         <button 
                           id={`cms-change-gallery-img-${originalIndex}`}
                           onClick={(e) => {
                             e.stopPropagation(); 
                             triggerImageChange('gallery', originalIndex);
                           }}
-                          className="bg-gold-500 hover:bg-gold-600 text-white font-bold py-2 px-4 rounded-full text-[11px] shadow-lg uppercase transition-all"
+                          className="bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold py-2 px-4 rounded-full text-[11px] shadow-lg uppercase transition-all cursor-pointer"
                         >
                           <i className="fa-solid fa-camera mr-1"></i> Remplacer Photo
+                        </button>
+                        
+                        <button 
+                          id={`cms-delete-gallery-img-${originalIndex}`}
+                          onClick={(e) => {
+                            e.stopPropagation(); 
+                            handleDeleteGalleryItem(originalIndex);
+                          }}
+                          className="bg-red-600 hover:bg-red-750 text-white font-bold py-2 px-4 rounded-full text-[11px] shadow-lg uppercase transition-all cursor-pointer"
+                        >
+                          <i className="fa-solid fa-trash-can mr-1"></i> Supprimer
                         </button>
                       </div>
                     )}
@@ -1080,6 +1453,19 @@ export default function App() {
               })}
             </AnimatePresence>
           </div>
+
+          {/* Add gallery image action in CMS mode */}
+          {isEditMode && (
+            <div className="mt-12 text-center">
+              <button
+                id="gallery-add-item-btn"
+                onClick={handleAddNewGalleryItem}
+                className="bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold uppercase tracking-widest text-xs px-6 py-3.5 rounded-2xl shadow-md cursor-pointer hover:-translate-y-0.5 transition-transform inline-flex items-center gap-2"
+              >
+                <i className="fa-solid fa-circle-plus text-base"></i> Ajouter une Réalisation (Photo / Vidéo) au Book
+              </button>
+            </div>
+          )}
 
         </div>
       </section>
@@ -1214,36 +1600,189 @@ export default function App() {
               <div 
                 id={`testimonial-card-${tIndex}`}
                 key={test.id} 
-                className="bg-rose-brand-100/10 border border-rose-brand-100/60 p-6 rounded-2xl flex flex-col justify-between text-left relative"
+                className="bg-rose-brand-100/10 border border-rose-brand-100/60 p-6 rounded-2xl flex flex-col justify-between text-left relative group hover:shadow-md transition-shadow duration-300"
               >
                 {/* Quote decoration */}
                 <span className="absolute top-4 right-6 text-rose-brand-300 text-6xl font-serif leading-none select-none opacity-40">“</span>
                 
+                {isEditMode && (
+                  <button 
+                    id={`cms-delete-testimonial-${test.id}`}
+                    onClick={() => handleDeleteTestimonial(tIndex)}
+                    className="absolute top-4 right-14 text-red-500 hover:text-red-700 p-1.5 bg-red-55 p-1 bg-red-50 hover:bg-red-100 rounded transition-colors z-20 cursor-pointer"
+                    title="Supprimer cet avis de la Reine"
+                  >
+                    <i className="fa-solid fa-trash-can text-xs"></i>
+                  </button>
+                )}
+
                 <div>
                   {/* Rating Stars */}
                   <div className="flex text-gold-500 gap-1 mb-4 select-none">
-                    {[...Array(test.rating)].map((_, i) => (
-                      <i key={i} className="fa-solid fa-star text-xs"></i>
+                    {[...Array(5)].map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        disabled={!isEditMode}
+                        onClick={() => {
+                          if (isEditMode) {
+                            setContent(prev => {
+                              const testimonials = [...prev.testimonials];
+                              testimonials[tIndex] = { ...testimonials[tIndex], rating: i + 1 };
+                              return { ...prev, testimonials };
+                            });
+                          }
+                        }}
+                        className={`${isEditMode ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
+                        title={isEditMode ? `Définir à ${i + 1} étoiles` : ''}
+                      >
+                        <i className={`fa-solid fa-star text-xs ${i < test.rating ? 'text-gold-500' : 'text-slate-200'}`}></i>
+                      </button>
                     ))}
                   </div>
 
-                  <p className="text-slate-700 text-xs sm:text-sm leading-relaxed mb-6 font-sans italic">
+                  <p 
+                    contentEditable={isEditMode}
+                    suppressContentEditableWarning={true}
+                    onBlur={(e) => {
+                      handleTestimonialChange(tIndex, 'comment', e.currentTarget.textContent || '');
+                    }}
+                    className="text-slate-700 text-xs sm:text-sm leading-relaxed mb-6 font-sans italic outline-none hover:bg-gold-50/50 p-1 rounded"
+                  >
                     "{test.comment}"
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 pt-4 border-t border-rose-brand-100/40">
-                  <div className="w-8 h-8 rounded-full bg-gold-250 flex items-center justify-center font-bold text-slate-700 text-xs">
-                    {test.name.charAt(0)}
+                <div className="flex items-center gap-3 pt-4 border-t border-rose-brand-100/40 font-sans">
+                  <div className="w-8 h-8 rounded-full bg-gold-250 flex items-center justify-center font-bold text-slate-700 text-xs shrink-0 select-none">
+                    {test.name ? test.name.charAt(0) : 'R'}
                   </div>
-                  <div>
-                    <h5 className="font-semibold text-xs text-slate-900">{test.name}</h5>
-                    <p className="text-[10px] text-slate-500 font-medium">{test.role}</p>
+                  <div className="grow">
+                    <h5 
+                      contentEditable={isEditMode}
+                      suppressContentEditableWarning={true}
+                      onBlur={(e) => {
+                        handleTestimonialChange(tIndex, 'name', e.currentTarget.textContent || '');
+                      }}
+                      className="font-semibold text-xs text-slate-900 outline-none hover:bg-gold-50/50 px-1 rounded inline-block"
+                    >
+                      {test.name}
+                    </h5>
+                    <p 
+                      contentEditable={isEditMode}
+                      suppressContentEditableWarning={true}
+                      onBlur={(e) => {
+                        handleTestimonialChange(tIndex, 'role', e.currentTarget.textContent || '');
+                      }}
+                      className="text-[10px] text-slate-500 font-medium outline-none hover:bg-gold-50/50 px-1 rounded block"
+                    >
+                      {test.role}
+                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Visitor and Admin feedback actions container */}
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              id="visitor-leave-review-btn"
+              onClick={() => setIsReviewFormOpen(!isReviewFormOpen)}
+              className="bg-slate-950 border border-slate-800 hover:bg-slate-900 text-white font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-2xl shadow-md cursor-pointer flex items-center gap-2 hover:-translate-y-0.5 transition-transform"
+            >
+              <i className="fa-solid fa-pen-nib text-gold-400 animate-pulse"></i> {isReviewFormOpen ? "Fermer le formulaire d'avis" : "Laisser mon avis de Reine / Roi"}
+            </button>
+
+            {isEditMode && (
+              <button
+                id="cms-add-testimonial-btn"
+                onClick={handleAddTestimonial}
+                className="bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold uppercase tracking-wider text-xs px-6 py-3.5 rounded-2xl shadow-md cursor-pointer flex items-center gap-2 hover:-translate-y-0.5 transition-transform"
+              >
+                <i className="fa-solid fa-user-plus text-sm"></i> Ajouter un avis (Admin)
+              </button>
+            )}
+          </div>
+
+          {/* Interactive Guest Review form panel */}
+          {isReviewFormOpen && (
+            <div
+              id="visitor-review-form-panel"
+              className="mt-8 max-w-xl mx-auto bg-rose-brand-100/10 border border-rose-brand-100/60 rounded-3xl p-6 sm:p-8 shadow-sm text-left relative overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400"></div>
+              
+              <h4 className="font-serif text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <i className="fa-solid fa-crown text-gold-500 text-sm animate-bounce font-sans"></i> Partagez votre Expérience Royale
+              </h4>
+              <p className="text-slate-500 text-xs mb-6 font-sans">Votre satisfaction est notre plus belle réussite. Merci d'accorder un court instant pour évaluer Stay's Beauty !</p>
+              
+              <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div>
+                  <label className="block text-slate-700 text-[10px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider font-sans">Votre nom complet</label>
+                  <input
+                    type="text"
+                    required
+                    value={newReviewName}
+                    onChange={(e) => setNewReviewName(e.target.value)}
+                    placeholder="Ex: Stacy Altamira"
+                    className="w-full bg-white border border-rose-brand-100/80 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none transition-shadow text-slate-900 font-sans"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans">
+                  <div>
+                    <label className="block text-slate-700 text-[10px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider font-sans">Prestation réalisée</label>
+                    <input
+                      type="text"
+                      required
+                      value={newReviewRole}
+                      onChange={(e) => setNewReviewRole(e.target.value)}
+                      placeholder="Ex: Tresses Royales / Pose Gel"
+                      className="w-full bg-white border border-rose-brand-100/80 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none transition-shadow text-slate-900 font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 text-[10px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider font-sans">Votre note (Étoiles)</label>
+                    <div id="review-stars-selector" className="flex items-center gap-1.5 py-1.5 text-lg cursor-pointer select-none">
+                      {[1, 2, 3, 4, 5].map((stars) => (
+                        <button
+                          key={stars}
+                          type="button"
+                          onClick={() => setNewReviewRating(stars)}
+                          className="hover:scale-125 transition-transform focus:outline-none"
+                          title={`Attribuer ${stars} étoiles`}
+                        >
+                          <i className={`fa-solid fa-star leading-none ${newReviewRating >= stars ? "text-gold-500" : "text-slate-200"}`}></i>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 text-[10px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider font-sans">Votre commentaire ou témoignage</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={newReviewComment}
+                    onChange={(e) => setNewReviewComment(e.target.value)}
+                    placeholder="Racontez-nous l'accueil de Stacy, la qualité de la pose..."
+                    className="w-full bg-white border border-rose-brand-100/80 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-gold-500 focus:outline-none transition-shadow min-h-[80px] resize-y text-slate-900 font-sans"
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold uppercase tracking-widest text-[11px] py-3.5 rounded-xl cursor-pointer shadow-md flex items-center justify-center gap-1.5 hover:-translate-y-0.5 transition-transform"
+                >
+                  <i className="fa-solid fa-crown text-xs"></i> Publier mon avis en direct
+                </button>
+              </form>
+            </div>
+          )}
 
         </div>
       </section>

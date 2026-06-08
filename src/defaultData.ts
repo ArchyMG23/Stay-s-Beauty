@@ -110,6 +110,11 @@ export const defaultAppContent: AppContent = {
       description: "Mise en plis ondulée fluide avec délimitation de dentelle HD indétectable."
     }
   ],
+  galleryCategories: [
+    { id: "nails", name: "Onglerie" },
+    { id: "hair", name: "Tresses & Coiffures" },
+    { id: "lace", name: "Lace Frontals" }
+  ],
   testimonials: [
     {
       id: "test-1",

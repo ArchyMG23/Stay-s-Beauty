@@ -21,7 +21,7 @@ export interface PricingCategory {
 
 export interface GalleryItem {
   id: string;
-  category: 'nails' | 'hair' | 'lace';
+  category: string;
   title: string;
   imageUrl: string;
   description: string;
@@ -48,6 +48,7 @@ export interface AppContent {
   services: ServiceItem[];
   pricing: PricingCategory[];
   gallery: GalleryItem[];
+  galleryCategories?: { id: string; name: string }[];
   testimonials: TestimonialItem[];
   about: {
     title: string;
